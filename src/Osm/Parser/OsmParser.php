@@ -2,12 +2,6 @@
 
 namespace Osm\Parser;
 
-use pwerk\XmlStreamer\XmlStreamer;
-
-
-class OsmParser extends XmlStreamer
+abstract class OsmParser extends BzipXmlStreamer
 {
-
-    
-
 }
