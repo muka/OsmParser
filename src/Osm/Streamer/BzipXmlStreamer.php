@@ -1,6 +1,6 @@
 <?php
 
-namespace Osm\Parser;
+namespace Osm\Streamer;
 
 use pwerk\XmlStreamer\XmlStreamer;
 
@@ -15,7 +15,6 @@ abstract class BzipXmlStreamer extends XmlStreamer
             $this->isBzip = (substr($mixed, -3) === 'bz2');
 
             $fopen = $this->isBzip ? 'bzopen' : 'fopen';
-            $chunkSize = $this->isBzip ? 8092 : $chunkSize;
 
             $this->handle = $fopen($mixed, "r");
             if (isset($totalBytes)) {
@@ -35,27 +34,43 @@ abstract class BzipXmlStreamer extends XmlStreamer
         $this->customRootNode = $customRootNode;
         $this->customChildNode = $customChildNode;
 
-        parent::__construct($this->handle, $this->chunkSize, $this->customRootNode, $this->totalBytes, $this->customChildNode);
+//        parent::__construct($this->handle, $this->chunkSize, $this->customRootNode, $this->totalBytes, $this->customChildNode);
     }
 
-    private function readNextChunk() {
+    protected function readNextChunk() {
 
-        $fread = $this->isBzip ? "bzread": "fread";
-        $this->chunk .= $fread($this->handle, $this->chunkSize);
-        $this->readBytes += $this->chunkSize;
+        if($this->isBzip) {
 
-        if($this->isBzip && ($bzerr = bzerrno($this->handle)) > 0) {
-            return $bzerr;
+            $this->chunk .= bzread($this->handle, 8096);
+            $this->readBytes += $this->chunkSize;
+
+
+            if(($bzerr = bzerrno($this->handle)) != 0) {
+                throw new Exception("Bzip reading error", $bzerr);
+            }
+
+            if (feof($this->handle)) {
+                $this->readBytes = $this->totalBytes;
+                return false;
+            }
+
+        }
+        else {
+
+            $this->chunk .= fread($this->handle, $this->chunkSize);
+            $this->readBytes += $this->chunkSize;
+
+            if ($this->readBytes >= $this->totalBytes) {
+                $this->readBytes = $this->totalBytes;
+                return false;
+            }
         }
 
-        if ($this->readBytes >= $this->totalBytes) {
-            $this->readBytes = $this->totalBytes;
-            return false;
-        }
+
         return true;
     }
 
-    private function closeHandle() {
+    protected function closeHandle() {
         $fclose = $this->isBzip ? "bzclose": "fclose";
         $fclose($this->handle);
     }

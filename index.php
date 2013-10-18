@@ -1,42 +1,107 @@
 <?php
 
-$options = getopt("o:f:t::");
-
-$op = $options['o'];
-$filename = isset($options['f']) ? $options['f'] : "tmp/italy.osm.bz2";
-$tagslist = isset($options['t']) ? $options['t'] : null;
-
-if(!file_exists($filename)) {
-    die("`$filename` not exists\n");
-}
-if($tagslist && !file_exists($tagslist)) {
-    die("$tagslist not exists\n");
-}
-
-// ----------------------------------------
-
 require "./vendor/autoload.php";
 
-use Osm\Parser\OsmParser;
+use Osm\Parser\WayParser;
+use Osm\Parser\NodeParser;
+use Osm\Parser\RelationParser;
 
-switch($op) {
-    case "tags":
-        extractTags($filename);
-        break;
-    case "export":
-        break;
-    default:
-        die("command not recognized.");
+//$filename = 'tmp/italy.osm.bz2';
+$filename = 'tmp/trentino-alto-adige.osm.bz2';
+$dataset = parse($filename);
+
+function parse($filename) {
+
+    $timer = time();
+    echo sprintf("Started on %s\n", date("Y-m-d H:i", $timer));
+
+    $print_timeElapsed = function($items = null) use($timer) {
+        $now = time();
+        $take = ($now - $timer);
+        if($items) {
+            echo sprintf("\n\nFound %s items\n", count($items));
+        }
+        echo sprintf("Finished on %s\n", date("Y-m-d H:i", $now));
+        echo sprintf("Took %s.%s minutes \n", intval($take / 60), intval($take % 60));
+    };
+
+    register_shutdown_function($print_timeElapsed);
+
+    $cache = 'tmp/dataset.tmp';
+
+    $dataset = [];
+    if(file_exists($cache)) {
+        $dataset = unserialize(file_get_contents($cache));
+    }
+
+    if(!isset($dataset['ways'])) {
+        print "Parse way\n";
+        $streamerWay = new WayParser($filename);
+        $streamerWay->setDataset($dataset);
+        $streamerWay->parse();
+        $dataset = $streamerWay->getDataset();
+        file_put_contents($cache, serialize($dataset));
+        $streamerWay = null;
+
+        $print_timeElapsed($dataset['ways']);
+    }
+
+    if(!isset($dataset['nodes'])) {
+        print "Parse nodes\n";
+        $streamerNode = new NodeParser($filename);
+        $streamerNode->setDataset($dataset);
+        $streamerNode->parse();
+        $dataset = $streamerNode->getDataset();
+        file_put_contents($cache, serialize($dataset));
+        $streamerNode = null;
+
+        $print_timeElapsed($dataset['nodes']);
+    }
+
+    if(!isset($dataset['relations'])) {
+        print "Parse relations\n";
+        $streamerRelation = new RelationParser($filename);
+        $streamerRelation->setDataset($dataset);
+        $streamerRelation->parse();
+        $dataset = $streamerRelation->getDataset();
+        file_put_contents($cache, serialize($dataset));
+        $streamerRelation = null;
+
+        $print_timeElapsed($dataset['relations']);
+    }
+
+    $total = 0;
+    foreach($dataset as $dt) {
+        $total += count($dt);
+    }
+
+    print sprintf("Found %s items total\n", $total);
+
+    return $dataset;
 }
 
-function extractTags($filename) {
-
-    $parser = new OsmParser($filename);
-    $parser->setHandlers(["Osm\Parser\Handler\TagsHandler" => [ "tmp/tags.txt" ]]);
-
-    $parser->parse();
-
-}
-
-//$tagslist = file_get_contents($tagslist);
-//$parser->useTags($tags);
+//
+//$dataset['ways'] = array_filter($dataset['ways'], function($item) {
+//    $keep = true;
+//
+////    // skip parking
+////    if(isset($item->tags['amenity']) && $item->tags['amenity'] == 'parking') {
+////        $keep = false;
+////    }
+////
+////    // skip lift
+////    if(isset($item->tags['aerialway'])) {
+////        $keep = false;
+////    }
+//
+//    return $keep;
+//});
+//
+//array_map(function($item) {
+//
+//    print "\n==============\n";
+//    foreach($item->tags as $k => $v) {
+//        printf("%s: %s\n", $k, $v);
+//    }
+//
+//}, $dataset['ways']);
