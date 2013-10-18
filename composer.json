@@ -1,0 +1,26 @@
+{
+    "name": "Osm Parser",
+    "license": "MIT",
+    "type": "library",
+    "description": "Osm Parser",
+    "autoload": {
+        "psr-0": { "": "src/" }
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/muka/XmlStreamer.git"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.3",
+    	"pwerk/xmlstreamer": "dev-master as 1.0"
+    },
+    "scripts": {
+        "post-install-cmd": [],
+        "post-update-cmd": []
+    },
+    "config": {},
+    "minimum-stability": "stable",
+    "extra": {}
+}
