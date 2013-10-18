@@ -1,6 +1,6 @@
 <?php
 
-namespace Osm\Parser;
+namespace muka\OsmParser;
 use Osm\Streamer\BzipXmlStreamer;
 
 abstract class OsmParser extends BzipXmlStreamer {

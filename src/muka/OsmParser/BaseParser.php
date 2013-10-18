@@ -1,6 +1,6 @@
 <?php
 
-namespace Osm\Parser;
+namespace muka\OsmParser;
 
 abstract class BaseParser extends OsmParser {
 

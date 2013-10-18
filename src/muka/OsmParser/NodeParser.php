@@ -1,6 +1,6 @@
 <?php
 
-namespace Osm\Parser;
+namespace muka\OsmParser;
 
 class NodeParser extends OsmParser {
 

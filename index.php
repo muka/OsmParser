@@ -2,9 +2,9 @@
 
 require "./vendor/autoload.php";
 
-use Osm\Parser\WayParser;
-use Osm\Parser\NodeParser;
-use Osm\Parser\RelationParser;
+use muka\OsmParser\WayParser;
+use muka\OsmParser\NodeParser;
+use muka\OsmParser\RelationParser;
 
 //$filename = 'tmp/italy.osm.bz2';
 $filename = 'tmp/trentino-alto-adige.osm.bz2';
