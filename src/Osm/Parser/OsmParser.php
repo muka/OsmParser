@@ -2,6 +2,4 @@
 
 namespace Osm\Parser;
 
-abstract class OsmParser extends BzipXmlStreamer
-{
-}
+abstract class OsmParser extends BzipXmlStreamer {}
