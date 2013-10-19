@@ -12,7 +12,7 @@ NOTE: this class is a stub and need more work on it. At the moment all parsed da
 Usage
 ------
 
-```
+```php
 
 $filename='trentino-alto-adige.osm.bz2';
 
