@@ -14,7 +14,7 @@
     ],
     "require": {
         "php": ">=5.3.3",
-    	"pwerk/xmlstreamer": "dev-master as 1.0"
+    	"pwerk/xmlstreamer": "1.*"
     },
     "scripts": {
         "post-install-cmd": [],
