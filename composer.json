@@ -14,7 +14,7 @@
     ],
     "require": {
         "php": ">=5.3.3",
-    	"pwerk/xmlstreamer": "1.*"
+    	"pwerk/xmlstreamer": "1.0.*"
     },
     "scripts": {
         "post-install-cmd": [],
