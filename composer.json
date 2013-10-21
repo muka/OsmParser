@@ -14,6 +14,7 @@
     ],
     "require": {
         "php": ">=5.3.3",
+        "symfony/event-dispatcher": "*",
     	"pwerk/xmlstreamer": "dev-master as 1.0"
     },
     "scripts": {

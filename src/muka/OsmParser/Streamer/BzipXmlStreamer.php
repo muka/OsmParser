@@ -1,6 +1,6 @@
 <?php
 
-namespace Osm\Streamer;
+namespace muka\OsmParser\Streamer;
 
 use pwerk\XmlStreamer\XmlStreamer;
 

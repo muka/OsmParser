@@ -1,13 +1,106 @@
 <?php
 
 namespace muka\OsmParser;
-use Osm\Streamer\BzipXmlStreamer;
+
+use muka\OsmParser\Streamer\BzipXmlStreamer;
+
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 abstract class OsmParser extends BzipXmlStreamer {
 
     protected $ids = [];
     protected $dataset = [];
     protected $keysMap = [];
+
+    protected $dispatcher;
+
+    public function processNode($xmlString, $elementName, $nodeIndex) {
+
+        if(!$this->dispatcher) {
+            $this->dispatcher = new EventDispatcher();
+        }
+
+        $data = null;
+        switch($elementName) {
+            case "bounds":
+                $data = $this->getBound($xmlString, $elementName, $nodeIndex);
+                break;
+            case "node":
+                $data = $this->getNode($xmlString, $elementName, $nodeIndex);
+                break;
+            case "relation":
+                $data = $this->getRelation($xmlString, $elementName, $nodeIndex);
+                break;
+            case "way":
+                $data = $this->getWay($xmlString, $elementName, $nodeIndex);
+                break;
+        }
+
+        if($data) {
+            $this->dispatcher('osm_parser.item', new Event\OsmParserItemEvent($elementName, $data));
+        }
+
+        return true;
+    }
+
+    protected function getNode($xmlString, $elementName, $nodeIndex) {
+
+        $xml = simplexml_load_string($xmlString);
+
+        $node = $this->newElement();
+        $node->meta = $this->getMeta($xml);
+        $node->tag = $this->getTags($xml);
+
+        return $node;
+    }
+
+    protected function getBound($xmlString, $elementName, $nodeIndex) {
+
+        $xml = simplexml_load_string($xmlString);
+
+        // do it once
+        $bounds = $this->newElement();
+        $bounds->meta = $this->toArray($xml);
+        $bounds->meta['id'] = 0;
+
+        return $bounds;
+    }
+
+    protected function getWay($xmlString, $elementName, $nodeIndex) {
+
+        $xml = simplexml_load_string($xmlString);
+//
+//        $found = false;
+//        foreach ($xml->tag as $tag) {
+//            $key = (string)$tag['k'];
+//            $val = (string)$tag['v'];
+//            if($found = $this->findKey($key, $val)) {
+//                break;
+//            }
+//        }
+//
+//        if(!$found) {
+//            return true;
+//        }
+
+        $item = $this->newElement();
+        $item->meta = $this->getMeta($xml);
+        $item->tags = $this->getTags($xml);
+        $item->refs = $this->getNodesRef($xml);
+
+        return $item;
+    }
+    protected function getRelation($xmlString, $elementName, $nodeIndex) {
+
+        $xml = simplexml_load_string($xmlString);
+
+        $relation = $this->newElement();
+        $relation->meta = $this->getMeta($xml);
+        $relation->members = $this->getMembers($xml);
+        $relation->tags = $this->getTags($xml);
+
+        $this->addRelation($relation);
+    }
 
     protected function toArray($elem) {
         $values = [];
