@@ -12,6 +12,13 @@ abstract class BzipXmlStreamer extends XmlStreamer
 
         if (is_string($mixed)) {
 
+            if(!file_exists($mixed)) {
+                throw new \Exception("File does not exists.");
+            }
+            if(!is_readable($mixed)) {
+                throw new \Exception("File is not readable.");
+            }
+
             $this->isBzip = (substr($mixed, -3) === 'bz2');
 
             $fopen = $this->isBzip ? 'bzopen' : 'fopen';
