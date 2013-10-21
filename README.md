@@ -48,15 +48,15 @@ $parser->getDispatcher()->addListener("osm_parser.item", function($e) {
 });
 
 /**
-* Event can be either one of the parent nodes available in an xml
+* Event can be either one of the parent nodes available in the .osm xml
 * - osm_parser.item.node
 * - osm_parser.item.relation
 * - osm_parser.item.way
 * - osm_parser.item.bounds
 */
 $parser->getDispatcher()->addListener("osm_parser.item.node", function($e) {
-    var_dump($e->getType());
-    var_dump($e->getItem());
+    $node = $e->getItem();
+    printf("Node id `%s` by %s is at [%s,%s]\n", $node->meta['id'], $node->meta['user'], $node->meta['lat'], $node->meta['lon']);
 });
 
 $parser->parse();
