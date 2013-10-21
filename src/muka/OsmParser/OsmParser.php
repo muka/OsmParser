@@ -75,19 +75,6 @@ class OsmParser extends BzipXmlStreamer {
     protected function getWay($xmlString, $elementName, $nodeIndex) {
 
         $xml = simplexml_load_string($xmlString);
-//
-//        $found = false;
-//        foreach ($xml->tag as $tag) {
-//            $key = (string)$tag['k'];
-//            $val = (string)$tag['v'];
-//            if($found = $this->findKey($key, $val)) {
-//                break;
-//            }
-//        }
-//
-//        if(!$found) {
-//            return true;
-//        }
 
         $item = $this->newElement();
         $item->meta = $this->getMeta($xml);
@@ -135,6 +122,7 @@ class OsmParser extends BzipXmlStreamer {
 
     protected function getNodesRef($xml) {
         $list = [];
+
         if($xml->nd) {
             foreach ($xml->nd as $ndNode) {
                 $nd = $this->toArray($ndNode);
