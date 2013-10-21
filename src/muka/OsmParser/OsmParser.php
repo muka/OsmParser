@@ -111,10 +111,12 @@ class OsmParser extends BzipXmlStreamer {
 
     protected function getMembers($xml) {
         $members = [];
-        foreach($xml->members as $member) {
+
+        foreach($xml->member as $member) {
             $member = $this->toArray($member);
             $members[$member['ref']] = $member;
         }
+
         return $members;
     }
 
