@@ -24,7 +24,7 @@ In your composer.json add something like
 
         ... other require ...
 
-        "muka/OsmParser": "dev-master as 1.0"
+        "muka/osmparser": "dev-master as 1.0"
     }
 
 ```

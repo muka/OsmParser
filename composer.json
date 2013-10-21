@@ -1,5 +1,5 @@
 {
-    "name": "Osm Parser",
+    "name": "muka/osmparser",
     "license": "MIT",
     "type": "library",
     "description": "Osm Parser",
