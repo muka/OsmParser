@@ -6,7 +6,7 @@ use muka\OsmParser\Streamer\BzipXmlStreamer;
 
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
-abstract class OsmParser extends BzipXmlStreamer {
+class OsmParser extends BzipXmlStreamer {
 
     protected $ids = [];
     protected $dataset = [];
@@ -14,11 +14,16 @@ abstract class OsmParser extends BzipXmlStreamer {
 
     protected $dispatcher;
 
-    public function processNode($xmlString, $elementName, $nodeIndex) {
+    public function __construct($mixed, $chunkSize = 16384, $customRootNode = null, $totalBytes = null, $customChildNode = null) {
+        $this->dispatcher = new EventDispatcher();
+        parent::__construct($mixed, $chunkSize, $customRootNode, $totalBytes, $customChildNode);
+    }
 
-        if(!$this->dispatcher) {
-            $this->dispatcher = new EventDispatcher();
-        }
+    public function getDispatcher() {
+        return $this->dispatcher;
+    }
+
+    public function processNode($xmlString, $elementName, $nodeIndex) {
 
         $data = null;
         switch($elementName) {
@@ -37,7 +42,8 @@ abstract class OsmParser extends BzipXmlStreamer {
         }
 
         if($data) {
-            $this->dispatcher('osm_parser.item', new Event\OsmParserItemEvent($elementName, $data));
+            $this->dispatcher->dispatch('osm_parser.item', new Event\OsmParserItemEvent($elementName, $data));
+            $this->dispatcher->dispatch('osm_parser.item.'.$elementName, new Event\OsmParserItemEvent($elementName, $data));
         }
 
         return true;
@@ -90,6 +96,7 @@ abstract class OsmParser extends BzipXmlStreamer {
 
         return $item;
     }
+
     protected function getRelation($xmlString, $elementName, $nodeIndex) {
 
         $xml = simplexml_load_string($xmlString);
@@ -99,7 +106,16 @@ abstract class OsmParser extends BzipXmlStreamer {
         $relation->members = $this->getMembers($xml);
         $relation->tags = $this->getTags($xml);
 
-        $this->addRelation($relation);
+        return $relation;
+    }
+
+    protected function getMembers($xml) {
+        $members = [];
+        foreach($xml->members as $member) {
+            $member = $this->toArray($member);
+            $members[$member['ref']] = $member;
+        }
+        return $members;
     }
 
     protected function toArray($elem) {
@@ -142,69 +158,5 @@ abstract class OsmParser extends BzipXmlStreamer {
         $el->meta = array();
         return $el;
     }
-
-
-    protected function addElement($type, $elem) {
-        $this->dataset[$type][$elem->meta['id']] = $elem;
-    }
-
-    protected function getElements($type) {
-        if(!isset($this->dataset[$type])) {
-            $this->dataset[$type] = [];
-        }
-        return $this->dataset[$type];
-    }
-
-    protected function setElements($type, $elements) {
-        if(!isset($this->dataset[$type])) {
-            $this->dataset[$type] = [];
-        }
-        $this->dataset[$type] = $elements;
-    }
-
-    public function setDataset($ds) {
-        $this->dataset = $ds;
-    }
-
-    public function getDataset() {
-        return $this->dataset;
-    }
-
-    public function getWays() {
-        return $this->getElements("ways");
-    }
-
-    public function setWays($items) {
-        $this->setElements("ways", $items);
-    }
-
-    public function setNodes($nodes) {
-        $this->getElements("nodes", $nodes);
-    }
-
-    public function getNodes() {
-        return $this->getElements("nodes");
-    }
-
-    protected function getRelations() {
-        return $this->getElements("relations");
-    }
-
-    protected function setRelations($r) {
-        $this->getElements("relations", $r);
-    }
-
-    protected function addWay($item) {
-        $this->addElement("ways", $item);
-    }
-
-    protected function addNode($node) {
-        $this->addElement("nodes", $node);
-    }
-
-    protected function addRelation($relation) {
-        $this->addElement("relations", $relation);
-    }
-
 
 }

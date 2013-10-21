@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" generator="osmconvert 0.7T" timestamp="2013-10-02T19:15:01Z">
+	<bounds minlat="45.61887" minlon="10.27899" maxlat="47.14673" maxlon="12.5600802"/>
+	<node id="100" lat="46.104119" lon="11.0899633" version="4" timestamp="2010-09-01T22:36:26Z" changeset="5658159" uid="000" user="xxx"/>
+	<node id="200" lat="46.3693138" lon="11.290448" version="5" timestamp="2009-03-11T13:30:43Z" changeset="786213" uid="000" user="xxx"/>
+	<node id="300" lat="46.2262194" lon="11.1514362" version="3" timestamp="2009-03-10T12:43:40Z" changeset="775964" uid="000" user="xxx"/>
+	<node id="400" lat="45.7970312" lon="11.0209641" version="2" timestamp="2010-11-07T11:11:52Z" changeset="6310073" uid="000" user="xxx"/>
+	<node id="500" lat="45.76189" lon="10.997163" version="1" timestamp="2006-06-30T11:51:33Z" changeset="48807" uid="000" user="xxx">
+		<tag k="created_by" v="asd"/>
+	</node>
+	<relation id="600" version="5" timestamp="2011-04-23T21:55:28Z" changeset="7947994" uid="000" user="xxx">
+		<member type="node" ref="200" role="via"/>
+		<tag k="restriction" v="only_straight_on"/>
+		<tag k="type" v="restriction"/>
+	</relation>
+	<way id="700" version="5" timestamp="2012-06-22T14:50:47Z" changeset="11979984" uid="000" user="xxx">
+		<nd ref="100"/>
+		<tag k="highway" v="secondary"/>
+		<tag k="name" v="Strada Statale delle Dolomiti"/>
+		<tag k="nat_ref" v="SS48"/>
+		<tag k="ref" v="SS48"/>
+	</way>
+</osm>
+
