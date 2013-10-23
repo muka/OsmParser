@@ -8,10 +8,6 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class OsmParser extends BzipXmlStreamer {
 
-    protected $ids = [];
-    protected $dataset = [];
-    protected $keysMap = [];
-
     protected $dispatcher;
 
     public function __construct($mixed, $chunkSize = 16384, $customRootNode = null, $totalBytes = null, $customChildNode = null) {
@@ -42,8 +38,10 @@ class OsmParser extends BzipXmlStreamer {
         }
 
         if($data) {
-            $this->dispatcher->dispatch('osm_parser.item', new Event\OsmParserItemEvent($elementName, $data));
-            $this->dispatcher->dispatch('osm_parser.item.'.$elementName, new Event\OsmParserItemEvent($elementName, $data));
+            $parserItem = new Event\OsmParserItemEvent($elementName, $data);
+            $this->dispatcher->dispatch('osm_parser.item', $parserItem);
+            $this->dispatcher->dispatch('osm_parser.item.'.$elementName, $parserItem);
+            $parserItem = null;
         }
 
         return true;
@@ -55,7 +53,7 @@ class OsmParser extends BzipXmlStreamer {
 
         $node = $this->newElement();
         $node->meta = $this->getMeta($xml);
-        $node->tag = $this->getTags($xml);
+        $node->tags = $this->getTags($xml);
 
         return $node;
     }
@@ -67,7 +65,7 @@ class OsmParser extends BzipXmlStreamer {
         // do it once
         $bounds = $this->newElement();
         $bounds->meta = $this->toArray($xml);
-        $bounds->meta['id'] = 0;
+        unset($bounds->meta['id']);
 
         return $bounds;
     }
@@ -101,7 +99,7 @@ class OsmParser extends BzipXmlStreamer {
 
         foreach($xml->member as $member) {
             $member = $this->toArray($member);
-            $members[$member['ref']] = $member;
+            $members[] = $member;
         }
 
         return $members;
@@ -134,7 +132,7 @@ class OsmParser extends BzipXmlStreamer {
 
     protected function getTags($xml) {
         $tags = [];
-        if($xml->tag) {
+        if(isset($xml->tag)) {
             foreach ($xml->tag as $tagNode) {
                 $tag = $this->toArray($tagNode);
                 $tags[ (string)$tag['k'] ] = (string)$tag['v'];
