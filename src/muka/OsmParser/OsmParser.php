@@ -11,12 +11,21 @@ class OsmParser extends BzipXmlStreamer {
     protected $dispatcher;
 
     public function __construct($mixed, $chunkSize = 16384, $customRootNode = null, $totalBytes = null, $customChildNode = null) {
+
         $this->dispatcher = new EventDispatcher();
+
+        $this->getDispatcher()->addListener("osm_parser.stop", array($this, "stop"));
+
         parent::__construct($mixed, $chunkSize, $customRootNode, $totalBytes, $customChildNode);
     }
 
     public function getDispatcher() {
         return $this->dispatcher;
+    }
+
+    public function stop() {
+
+        $this->closeHandle();
     }
 
     public function processNode($xmlString, $elementName, $nodeIndex) {
@@ -38,7 +47,7 @@ class OsmParser extends BzipXmlStreamer {
         }
 
         if($data) {
-            $parserItem = new Event\OsmParserItemEvent($elementName, $data);
+            $parserItem = new Event\OsmParserItemEvent($elementName, $data, $this);
             $this->dispatcher->dispatch('osm_parser.item', $parserItem);
             $this->dispatcher->dispatch('osm_parser.item.'.$elementName, $parserItem);
             $parserItem = null;
