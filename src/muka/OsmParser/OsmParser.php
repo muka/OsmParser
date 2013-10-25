@@ -9,12 +9,11 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 class OsmParser extends BzipXmlStreamer {
 
     protected $dispatcher;
+    protected $continue = true;
 
     public function __construct($mixed, $chunkSize = 16384, $customRootNode = null, $totalBytes = null, $customChildNode = null) {
 
         $this->dispatcher = new EventDispatcher();
-
-        $this->getDispatcher()->addListener("osm_parser.stop", array($this, "stop"));
 
         parent::__construct($mixed, $chunkSize, $customRootNode, $totalBytes, $customChildNode);
     }
@@ -24,11 +23,14 @@ class OsmParser extends BzipXmlStreamer {
     }
 
     public function stop() {
-
-        $this->closeHandle();
+        $this->continue = false;
     }
 
     public function processNode($xmlString, $elementName, $nodeIndex) {
+
+        if(!$this->continue) {
+            return false;
+        }
 
         $data = null;
         switch($elementName) {
