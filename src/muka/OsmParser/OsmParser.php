@@ -15,6 +15,8 @@ class OsmParser extends BzipXmlStreamer {
 
         $this->dispatcher = new EventDispatcher();
 
+        $this->getDispatcher()->addListener("osm_parser.process.stop", array($this, "stop"));
+
         parent::__construct($mixed, $chunkSize, $customRootNode, $totalBytes, $customChildNode);
     }
 
