@@ -58,6 +58,7 @@ abstract class BzipXmlStreamer extends XmlStreamer
 
             if (feof($this->handle)) {
                 $this->readBytes = $this->totalBytes;
+
                 return false;
             }
 
@@ -73,13 +74,14 @@ abstract class BzipXmlStreamer extends XmlStreamer
             }
         }
 
-
         return true;
     }
 
     protected function closeHandle() {
-        $fclose = $this->isBzip ? "bzclose": "fclose";
-        $fclose($this->handle);
+        if($this->handle) {
+            $fclose = $this->isBzip ? "bzclose": "fclose";
+            $fclose($this->handle);
+        }
     }
 
 }
