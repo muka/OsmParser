@@ -8,13 +8,11 @@ class OsmParserItemEvent extends Event {
 
     private $currentItem;
     private $currentType;
-    private $osmParser;
 
-    public function __construct($currentType, $currentItem, \muka\OsmParser\OsmParser$osmParser)
+    public function __construct($currentType, $currentItem)
     {
         $this->currentType = $currentType;
         $this->currentItem = $currentItem;
-        $this->osmParser = $osmParser;
     }
 
     public function getItem()
@@ -25,11 +23,6 @@ class OsmParserItemEvent extends Event {
     public function getType()
     {
         return $this->currentType;
-    }
-
-    public function getParser()
-    {
-        return $this->osmParser;
     }
 
 }
