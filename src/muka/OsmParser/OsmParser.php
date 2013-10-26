@@ -46,7 +46,7 @@ class OsmParser extends BzipXmlStreamer {
         return [
             "size"       => $this->getTotalBytes(),
             "position"   => $this->getReadBytes(),
-            "percentage" => ($this->getTotalBytes() / $this->getReadBytes()) / 0.1,
+            "percentage" => ($this->getReadBytes() * 100) / $this->getTotalBytes(),
         ];
     }
 
