@@ -73,7 +73,7 @@ class OsmParser extends BzipXmlStreamer {
         }
 
         if($data) {
-            $parserItem = new Event\OsmParserItemEvent($elementName, $data);
+            $parserItem = new Event\OsmParserItemEvent($elementName, $data, $this);
             $this->dispatcher->dispatch('osm_parser.item', $parserItem);
             $this->dispatcher->dispatch('osm_parser.item.'.$elementName, $parserItem);
             $parserItem = null;
