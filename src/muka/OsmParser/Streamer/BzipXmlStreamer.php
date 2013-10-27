@@ -8,7 +8,7 @@ abstract class BzipXmlStreamer extends XmlStreamer
 {
     protected $isBzip = false;
 
-    public function __construct($mixed, $chunkSize = 16384, $customRootNode = null, $totalBytes = null, $customChildNode = null) {
+    public function __construct($mixed, $lastPosition, $chunkSize = 16384, $customRootNode = null, $totalBytes = null, $customChildNode = null) {
 
         if (is_string($mixed)) {
 
@@ -24,11 +24,19 @@ abstract class BzipXmlStreamer extends XmlStreamer
             $fopen = $this->isBzip ? 'bzopen' : 'fopen';
 
             $this->handle = $fopen($mixed, "r");
+
             if (isset($totalBytes)) {
                 $this->totalBytes = $totalBytes;
             } else {
+                // this won't work for bzip!
                 $this->totalBytes = filesize($mixed);
             }
+
+            // set last position of reader, allow for multiple reading instances
+            if(!$this->isBzip && $lastPosition) {
+                fseek($this->handle, $lastPosition, SEEK_SET);
+            }
+
         } else if (is_resource($mixed)) {
             $this->handle = $mixed;
             if (!isset($totalBytes)) {

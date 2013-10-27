@@ -19,12 +19,7 @@ class OsmParser extends BzipXmlStreamer {
         $this->getDispatcher()->addListener("osm_parser.process.stop", array($this, "stop"));
         $this->getDispatcher()->addListener("osm_parser.process.completed", array($this, "completed"));
 
-        parent::__construct($mixed, $chunkSize, $customRootNode, $totalBytes, $customChildNode);
-
-        // set last position of reader, allow for multiple reading instances
-        if($lastPosition) {
-            fseek($this->handle, $lastPosition, SEEK_SET);
-        }
+        parent::__construct($mixed, $lastPosition, $chunkSize, $customRootNode, $totalBytes, $customChildNode);
 
     }
 
