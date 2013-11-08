@@ -2,25 +2,68 @@
 
 namespace muka\OsmParser;
 
-use muka\OsmParser\Streamer\BzipXmlStreamer;
-
+use Hobnob\XmlStreamReader\Parser;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
-class OsmParser extends BzipXmlStreamer {
+
+class OsmParser extends Parser {
+
+    protected $resource;
+    protected $chunkSize;
+    protected $totalBytes;
 
     protected $dispatcher;
     protected $continue = true;
     protected $completed = false;
 
-    public function __construct($mixed, $lastPosition = 0, $chunkSize = 16384, $customRootNode = null, $totalBytes = null, $customChildNode = null) {
+    public function __construct($data, $chunkSize = 1024) {
+
+        //Ensure that the $data var is of the right type
+        if ( !is_string( $data )
+            && ( !is_resource( $data ) || get_resource_type($data) !== 'stream' )
+        )
+        {
+            throw new Exception\OsmParserException( 'Data must be a string or a stream resource' );
+        }
+        $this->resource = $data;
+
+        //Ensure $chunkSize is the right type
+        if ( !is_int( $chunkSize ) )
+        {
+            throw new Exception\OsmParserException( 'Chunk size must be an integer' );
+        }
+        $this->chunkSize = $chunkSize;
 
         $this->dispatcher = new EventDispatcher();
 
         $this->getDispatcher()->addListener("osm_parser.process.stop", array($this, "stop"));
         $this->getDispatcher()->addListener("osm_parser.process.completed", array($this, "completed"));
 
-        parent::__construct($mixed, $lastPosition, $chunkSize, $customRootNode, $totalBytes, $customChildNode);
+        $this->registerCallback('/xml/osm/bounds', [$this, "handleBounds"]);
+        $this->registerCallback('/xml/osm/node', [$this, "handleNode"]);
+        $this->registerCallback('/xml/osm/way', [$this, "handleWay"]);
+        $this->registerCallback('/xml/osm/relation', [$this, "handleRelation"]);
 
+    }
+
+    protected function handleBounds(Parser $parser, \SimpleXMLElement $xml) {
+        $this->dispatch('bounds', $me->getBound($parser, $xml));
+    }
+    protected function handleNode(Parser $parser, \SimpleXMLElement $xml) {
+        $this->dispatch('node', $me->getNode($parser, $xml));
+    }
+    protected function handleWay(Parser $parser, \SimpleXMLElement $xml) {
+        $this->dispatch('way', $me->getWay($parser, $xml));
+    }
+    protected function handleRelation(Parser $parser, \SimpleXMLElement $xml) {
+        $this->dispatch('relation', $me->getRelation($parser, $xml));
+    }
+
+    public function parse()
+    {
+        parent::parse($this->resource, $this->chunkSize);
+        $this->dispatch("osm_parser.process.completed", $this->getStatus());
+        return $this;
     }
 
     public function getDispatcher() {
@@ -36,6 +79,7 @@ class OsmParser extends BzipXmlStreamer {
     }
 
     public function stop() {
+        $this->stopParsing();
         $this->continue = false;
     }
 
@@ -51,41 +95,25 @@ class OsmParser extends BzipXmlStreamer {
         ];
     }
 
-    public function processNode($xmlString, $elementName, $nodeIndex) {
-
-        if(!$this->continue) {
-            return false;
+    protected function getTotalBytes() {
+        if(!isset($this->totalBytes)) {
+            // get size
+            $stat = fstat($this->resource);
+            $this->totalBytes = $stat['size'];
         }
-
-        $data = null;
-        switch($elementName) {
-            case "bounds":
-                $data = $this->getBound($xmlString, $elementName, $nodeIndex);
-                break;
-            case "node":
-                $data = $this->getNode($xmlString, $elementName, $nodeIndex);
-                break;
-            case "relation":
-                $data = $this->getRelation($xmlString, $elementName, $nodeIndex);
-                break;
-            case "way":
-                $data = $this->getWay($xmlString, $elementName, $nodeIndex);
-                break;
-        }
-
-        if($data) {
-            $parserItem = new Event\OsmParserItemEvent($elementName, $data, $this);
-            $this->dispatcher->dispatch('osm_parser.item', $parserItem);
-            $this->dispatcher->dispatch('osm_parser.item.'.$elementName, $parserItem);
-            $parserItem = null;
-        }
-
-        return true;
+        return $this->totalBytes;
     }
 
-    protected function getNode($xmlString, $elementName, $nodeIndex) {
+    protected function getReadBytes() {
+        return ftell($this->resource);
+    }
 
-        $xml = simplexml_load_string($xmlString);
+
+    protected function dispatch($elementName, $data) {
+        $this->dispatcher->dispatch('osm_parser.item', new Event\OsmParserItemEvent($elementName, $data, $this));
+    }
+
+    protected function getNode(Parser $parser, \SimpleXMLElement $xml) {
 
         $node = $this->newElement();
         $node->meta = $this->getMeta($xml);
@@ -94,9 +122,7 @@ class OsmParser extends BzipXmlStreamer {
         return $node;
     }
 
-    protected function getBound($xmlString, $elementName, $nodeIndex) {
-
-        $xml = simplexml_load_string($xmlString);
+    protected function getBound(Parser $parser, \SimpleXMLElement $xml) {
 
         // do it once
         $bounds = $this->newElement();
@@ -106,9 +132,7 @@ class OsmParser extends BzipXmlStreamer {
         return $bounds;
     }
 
-    protected function getWay($xmlString, $elementName, $nodeIndex) {
-
-        $xml = simplexml_load_string($xmlString);
+    protected function getWay(Parser $parser, \SimpleXMLElement $xml) {
 
         $item = $this->newElement();
         $item->meta = $this->getMeta($xml);
@@ -118,9 +142,7 @@ class OsmParser extends BzipXmlStreamer {
         return $item;
     }
 
-    protected function getRelation($xmlString, $elementName, $nodeIndex) {
-
-        $xml = simplexml_load_string($xmlString);
+    protected function getRelation(Parser $parser, \SimpleXMLElement $xml) {
 
         $relation = $this->newElement();
         $relation->meta = $this->getMeta($xml);
@@ -181,18 +203,6 @@ class OsmParser extends BzipXmlStreamer {
         $el = new \stdClass();
         $el->meta = array();
         return $el;
-    }
-
-
-    protected function readNextChunk() {
-
-        $return = parent::readNextChunk();
-
-        if(!$return) {
-            $this->getDispatcher()->dispatch("osm_parser.process.completed");
-        }
-
-        return $return;
     }
 
 }
