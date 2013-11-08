@@ -18,21 +18,7 @@ class OsmParser extends Parser {
 
     public function __construct($data, $chunkSize = 1024) {
 
-        //Ensure that the $data var is of the right type
-        if ( !is_string( $data )
-            && ( !is_resource( $data ) || get_resource_type($data) !== 'stream' )
-        )
-        {
-            throw new Exception\OsmParserException( 'Data must be a string or a stream resource' );
-        }
-        $this->resource = $data;
-
-        //Ensure $chunkSize is the right type
-        if ( !is_int( $chunkSize ) )
-        {
-            throw new Exception\OsmParserException( 'Chunk size must be an integer' );
-        }
-        $this->chunkSize = $chunkSize;
+        $this->setResource($data, $chunkSize);
 
         $this->dispatcher = new EventDispatcher();
 
@@ -48,6 +34,26 @@ class OsmParser extends Parser {
 
     }
 
+    protected function setResource($data, $chunkSize) {
+
+        //Ensure that the $data var is of the right type
+        if ( !is_string( $data )
+            && ( !is_resource( $data ) || get_resource_type($data) !== 'stream' )
+        )
+        {
+            throw new Exception\OsmParserException( 'Data must be a string or a stream resource' );
+        }
+        $this->resource = $data;
+
+        //Ensure $chunkSize is the right type
+        if ( !is_int( $chunkSize ) )
+        {
+            throw new Exception\OsmParserException( 'Chunk size must be an integer' );
+        }
+
+        $this->chunkSize = $chunkSize;
+    }
+
     protected function handleBounds(Parser $parser, \SimpleXMLElement $xml) {
         $this->dispatch('bounds', $this->getBound($parser, $xml));
     }
@@ -61,8 +67,18 @@ class OsmParser extends Parser {
         $this->dispatch('relation', $this->getRelation($parser, $xml));
     }
 
-    public function parse()
+    public function parse($data = null, $chunkSize = null)
     {
+        if(is_null($data)) {
+            $data = $this->resource;
+        }
+
+        if(is_null($chunkSize)) {
+            $chunkSize = $this->chunkSize;
+        }
+
+        $this->setResource($data, $chunkSize);
+
         parent::parse($this->resource, $this->chunkSize);
         $this->dispatcher->dispatch("osm_parser.process.completed");
         return $this;
