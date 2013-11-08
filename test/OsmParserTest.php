@@ -33,23 +33,23 @@ class OsmParserTest extends \PHPUnit_Framework_TestCase
     }
 
     protected function is($event, $type) {
-        return ($event->getType() === $type);
+        return ($event->getType() == $type);
     }
 
     public function isNode(OsmParserItemEvent $event) {
-        $this->is($event, 'node');
+        return $this->is($event, 'node');
     }
 
     public function isRelation(OsmParserItemEvent $event) {
-        $this->is($event, 'relation');
+        return $this->is($event, 'relation');
     }
 
     public function isWay(OsmParserItemEvent $event) {
-        $this->is($event, 'way');
+        return $this->is($event, 'way');
     }
 
     public function isBounds(OsmParserItemEvent $event) {
-        $this->is($event, 'bounds');
+        return $this->is($event, 'bounds');
     }
 
     public function relationHasMemebers(OsmParserItemEvent $event) {

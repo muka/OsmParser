@@ -39,30 +39,32 @@ class OsmParser extends Parser {
         $this->getDispatcher()->addListener("osm_parser.process.stop", array($this, "stop"));
         $this->getDispatcher()->addListener("osm_parser.process.completed", array($this, "completed"));
 
-        $this->registerCallback('/xml/osm/bounds', [$this, "handleBounds"]);
-        $this->registerCallback('/xml/osm/node', [$this, "handleNode"]);
-        $this->registerCallback('/xml/osm/way', [$this, "handleWay"]);
-        $this->registerCallback('/xml/osm/relation', [$this, "handleRelation"]);
+        $this->registerCallbacks([
+            ['/osm/bounds/', [$this, "handleBounds"]],
+            ['/osm/node/', [$this, "handleNode"]],
+            ['/osm/way/', [$this, "handleWay"]],
+            ['/osm/relation/', [$this, "handleRelation"]],
+        ]);
 
     }
 
     protected function handleBounds(Parser $parser, \SimpleXMLElement $xml) {
-        $this->dispatch('bounds', $me->getBound($parser, $xml));
+        $this->dispatch('bounds', $this->getBound($parser, $xml));
     }
     protected function handleNode(Parser $parser, \SimpleXMLElement $xml) {
-        $this->dispatch('node', $me->getNode($parser, $xml));
+        $this->dispatch('node', $this->getNode($parser, $xml));
     }
     protected function handleWay(Parser $parser, \SimpleXMLElement $xml) {
-        $this->dispatch('way', $me->getWay($parser, $xml));
+        $this->dispatch('way', $this->getWay($parser, $xml));
     }
     protected function handleRelation(Parser $parser, \SimpleXMLElement $xml) {
-        $this->dispatch('relation', $me->getRelation($parser, $xml));
+        $this->dispatch('relation', $this->getRelation($parser, $xml));
     }
 
     public function parse()
     {
         parent::parse($this->resource, $this->chunkSize);
-        $this->dispatch("osm_parser.process.completed", $this->getStatus());
+        $this->dispatcher->dispatch("osm_parser.process.completed");
         return $this;
     }
 
@@ -97,7 +99,6 @@ class OsmParser extends Parser {
 
     protected function getTotalBytes() {
         if(!isset($this->totalBytes)) {
-            // get size
             $stat = fstat($this->resource);
             $this->totalBytes = $stat['size'];
         }
@@ -107,7 +108,6 @@ class OsmParser extends Parser {
     protected function getReadBytes() {
         return ftell($this->resource);
     }
-
 
     protected function dispatch($elementName, $data) {
         $this->dispatcher->dispatch('osm_parser.item', new Event\OsmParserItemEvent($elementName, $data, $this));
